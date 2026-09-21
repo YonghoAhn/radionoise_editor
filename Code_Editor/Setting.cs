@@ -3,46 +3,80 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Xml;
 using System.Xml.Linq;
 
 namespace Code_Editor
 {
+
     class Setting
     {
-        /* TODO : Add Setting Field
-         * Font
-         * Background Image
-         * Account
+        /* INI FIELD CONFIG TEMPLATE
+         * Setting.ini
+         * [Font]
+         * Font=Consolas
+         * FontSize=13
+         * [Background]
+         * Color=false
+         * ImagePath=C:\blah\blah.png
+         * [Account]
+         * ID=<username>
+         * PW=<password>
+         * Sync=false
          */
+        #region Setting_Field
         public static string Font { get; set; }
-        public static string BackImage { get; set; }
-        public static string StretchType { get; set; }
-        public static string Account { get; set; }
-        private static string setting_path = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName) + @"\Settings.xml";
-        public void Init_Setting()
+        public static int FontSize { get; set; }
+        public static bool Color { get; set; }
+        public static string ImagePath { get; set; }
+        public static string ID { get; set; }
+        public static string PW { get; set; }
+        public static bool Sync { get; set; }
+        #endregion
+        public static string setting_path = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName) + @"\Setting.ini";
+    }
+    class SettingManager
+    {
+        [DllImport("kernel32")]
+        private static extern long WritePrivateProfileString(string section, string key, string val, string filePath);
+        [DllImport("kernel32")]
+        private static extern int GetPrivateProfileString(string section, string key, string def, StringBuilder retVal, int size, string filePath);
+        private string Read_ini(string section, string key)
         {
-            //Load File & Apply Settings
-            StreamReader sr = new StreamReader(setting_path);
-            string str = sr.ReadToEnd();
-            string[] split = str.Split(new string[] { "\n", "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
-            //각각 첫줄부터 Font, Path, Stretch Type
-            Font = split[0];
-            BackImage = split[1];
-            StretchType = split[2];
+            StringBuilder temp = new StringBuilder(255);
+            int ret = GetPrivateProfileString(section, key, "", temp, 255, Setting.setting_path);
+            return temp.ToString();
         }
-        public void Sync_Setting(bool Get)
+        private void Write_ini(string Section, string Key, string Value)
         {
-            if(Get) //Sync를 받아오는 부분 -> Server에서 받아온다.
-            {
-                
-            }
-            else //Sync를 보내는 부분 -> Server에 저장한다.
-            {
+            WritePrivateProfileString(Section, Key, Value, Setting.setting_path);
+        }
+        public void Load_Setting()
+        {
+            //Setting에 Load한다.
+            Setting.Font = Read_ini("Font", "Font");
+            Setting.FontSize = Convert.ToInt32(Read_ini("Font","FontSize"));
+            Setting.Color = Convert.ToBoolean(Read_ini("Background", "Color"));
+            Setting.ImagePath = Read_ini("Background","ImagePath");
+            Setting.ID = Read_ini("Account","ID");
+            Setting.PW = Read_ini("Account", "PW");
+            Setting.Sync = Convert.ToBoolean(Read_ini("Account", "Sync"));
+        }
 
-            }
+        public void Save_Setting()
+        {
+            //Setting.ini에 저장한다.
+            Write_ini("Font", "Font", Setting.Font);
+            Write_ini("Font", "FontSize", Setting.FontSize.ToString());
+            Write_ini("Background", "Color", Setting.Color.ToString());
+            Write_ini("Background", "ImagePath", Setting.ImagePath);
+            Write_ini("Account", "ID", Setting.ID);
+            Write_ini("Account", "PW", Setting.PW);
+            Write_ini("Account", "Sync", Setting.Sync.ToString());
         }
     }
 }

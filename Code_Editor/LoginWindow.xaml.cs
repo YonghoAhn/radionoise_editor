@@ -23,5 +23,13 @@ namespace Code_Editor
         {
             InitializeComponent();
         }
+
+        private void btnLogin_Click(object sender, RoutedEventArgs e)
+        {
+            /*
+             * Server POST : Login
+             * Login 완료되면 Setting.ID에 로그인 성공한 ID를 입력해야 한다.
+             */
+        }
     }
 }
